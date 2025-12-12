@@ -1,0 +1,35 @@
+export const ROLE_PATHS: Record<string, string[]> = {
+  Admin: ["all"],
+  Auxiliar: ["/", "/profile", "/sick-leave", "/alerts"],
+  AuxiliarSIT: [
+    "/",
+    "/profile",
+    "/formavc09",
+    "/upload09",
+    "/avc09",
+    "/personnel",
+    "/hospitals",
+    "/units",
+    "/alerts",
+  ],
+  PersonalTS: [
+    "/",
+    "/profile",
+    "/personnel",
+    "/hospitals",
+    "/units",
+    "/alerts",
+  ],
+  Archivos: [
+    "/",
+    "/profile",
+    "/personnel",
+    "/filepersonnel",
+    "/hospitals",
+    "/units",
+    "/alerts",
+  ],
+  Invitado: ["/sick-leave"],
+};
+
+export const PUBLIC_PATHS = ["/signin", "/signup", "/error-404", "/blank"];
