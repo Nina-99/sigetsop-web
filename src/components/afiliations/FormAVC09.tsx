@@ -129,6 +129,46 @@ const FormAVC09: React.FC = () => {
     </div>
   );
 
+  const isValidDate = (dateStr: string, format: "YMD" | "DMY"): boolean => {
+    if (!dateStr) return false;
+
+    let day: number, month: number, year: number;
+
+    try {
+      if (format === "YMD") {
+        // YYYY-MM-DD
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+        [year, month, day] = dateStr.split("-").map(Number);
+      } else {
+        // DD-MM-YYYY
+        if (!/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) return false;
+        [day, month, year] = dateStr.split("-").map(Number);
+      }
+
+      const date = new Date(year, month - 1, day);
+
+      return (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const showDateError = (fieldName: string, expectedFormat: string) => {
+    Swal.fire({
+      icon: "error",
+      title: "Fecha inválida",
+      html: `
+      <strong>${fieldName}</strong><br/>
+      Formato esperado: <code>${expectedFormat}</code>
+    `,
+      confirmButtonText: "Corregir",
+    });
+  };
+
   function convertToISO(dateStr: string) {
     const [day, month, year] = dateStr.split("-");
     return `${year}-${month}-${day}`;
@@ -138,6 +178,28 @@ const FormAVC09: React.FC = () => {
     const match = str.match(/\d{4}-\d{2}-\d{2}/);
     return match ? match[0] : null;
   }
+
+  const extractAndValidateIssueDate = (value: string): string | null => {
+    if (!value) return null;
+
+    // Busca YYYY-MM-DD dentro del texto
+    const match = value.match(/\d{4}-\d{2}-\d{2}/);
+    if (!match) return null;
+
+    const [year, month, day] = match[0].split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    // Validación real de fecha
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return match[0]; // YYYY-MM-DD
+  };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -174,7 +236,9 @@ const FormAVC09: React.FC = () => {
         insured_number: formData.InsuredNumber.toUpperCase(),
         employer_number: formData.EmployerNumber.toUpperCase(),
         type_risk: formData.TypeRisk.toUpperCase(),
-        isue_date: extractISODate(formData.IsueDate.toUpperCase()),
+        // isue_date: extractISODate(formData.IsueDate.toUpperCase()),
+        isue_date: extractAndValidateIssueDate(formData.IsueDate),
+
         from_date: convertToISO(formData.FromDate.toUpperCase()),
         to_date: convertToISO(formData.ToDate.toUpperCase()),
         days_incapacity: formData.DaysIncapacity.toUpperCase(),
@@ -211,6 +275,17 @@ const FormAVC09: React.FC = () => {
       return;
     }
 
+    const from = new Date(convertToISO(formData.FromDate));
+    const to = new Date(convertToISO(formData.ToDate));
+
+    if (to < from) {
+      Swal.fire({
+        icon: "error",
+        title: "Rango de fechas inválido",
+        text: "La fecha HASTA no puede ser menor que la fecha DESDE.",
+      });
+      return;
+    }
     if (!formData.InsuredNumber || !formData.FromDate || !formData.ToDate) {
       Swal.fire({
         icon: "error",
@@ -219,20 +294,47 @@ const FormAVC09: React.FC = () => {
       });
       return;
     }
+    const validIssueDate = extractAndValidateIssueDate(formData.IsueDate);
 
     // Validar el formato de la fecha si es esencial (ej. "DD-MM-YYYY")
-    if (
-      !/^\d{2}-\d{2}-\d{4}$/.test(formData.FromDate) ||
-      !/^\d{2}-\d{2}-\d{4}$/.test(formData.ToDate)
-    ) {
+    // ✅ VALIDACIÓN DE FECHAS
+    if (!validIssueDate) {
       Swal.fire({
         icon: "error",
-        title: "Error de Formato",
-        text: "Las fechas (DESDE/HASTA) deben estar en formato DD-MM-YYYY.",
+        title: "Fecha de emisión inválida",
+        html: `
+      El campo <strong>LUGAR Y FECHA DE EMISIÓN</strong> debe contener una fecha válida.<br/>
+      <br/>
+      Ejemplo válido:<br/>
+      <code>ORURO 2025-08-25</code>
+    `,
+        confirmButtonText: "Corregir",
       });
-      // NOTA: Debes agregar una validación similar para IsueDate dependiendo de su formato esperado.
       return;
     }
+
+    if (!isValidDate(formData.FromDate, "DMY")) {
+      showDateError("FECHA DESDE", "DD-MM-YYYY");
+      return;
+    }
+
+    if (!isValidDate(formData.ToDate, "DMY")) {
+      showDateError("FECHA HASTA", "DD-MM-YYYY");
+      return;
+    }
+
+    // if (
+    //   !/^\d{2}-\d{2}-\d{4}$/.test(formData.FromDate) ||
+    //   !/^\d{2}-\d{2}-\d{4}$/.test(formData.ToDate)
+    // ) {
+    //   Swal.fire({
+    //     icon: "error",
+    //     title: "Error de Formato",
+    //     text: "Las fechas (DESDE/HASTA) deben estar en formato DD-MM-YYYY.",
+    //   });
+    //   // NOTA: Debes agregar una validación similar para IsueDate dependiendo de su formato esperado.
+    //   return;
+    // }
 
     const fullName =
       `${formData.LastName} ${formData.MaternalName} ${formData.FirstName}`

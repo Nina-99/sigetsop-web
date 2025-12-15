@@ -1,58 +1,86 @@
-import { useEffect, useState } from "react";
-import { usePersonnelSearch } from "../../../@core";
+import { useEffect, useState, useCallback } from "react";
 
-interface AutocompleteSelectProps<T> {
+interface Personnel {
+  id: number | string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  maternal_name?: string;
+  grade_data?: { grade_abbr: string };
+}
+
+interface AutocompleteSelectProps<T extends { id?: number | string }> {
   label?: string;
   value: T | null;
   onChange: (selected: T) => void;
-  results?: T[];
-  loading?: boolean;
   placeholder?: string;
+  fetchResults: (query: string) => Promise<T[]>;
 }
 
-export default function AutocompleteSelect<
-  T extends {
-    id?: number | string;
-    first_name?: string;
-    middle_name?: string;
-    last_name?: string;
-    maternal_name?: string;
-  },
->({ label, value, onChange }: AutocompleteSelectProps<T>) {
+export default function AutocompleteSelect<T extends Personnel>({
+  label,
+  value,
+  onChange,
+  placeholder = "Buscar personal...",
+  fetchResults,
+}: AutocompleteSelectProps<T>) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [results, setResults] = useState<T[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const getFullName = (person: T | null) => {
+  const getFullName = (person: any) => {
     if (!person) return "";
+    // usa los campos reales que vienen de tu backend
     const parts = [
-      person.last_name,
-      person.maternal_name,
-      person.first_name,
-      person.middle_name,
+      person.last_name || person.apellido || "",
+      person.maternal_name || "",
+      person.first_name || person.nombre || "",
+      person.middle_name || "",
     ].filter(Boolean);
-    return parts.join(" ");
+    return parts.join(" ") || person.id?.toString() || "";
   };
 
   useEffect(() => {
     if (value) setQuery(getFullName(value));
   }, [value]);
 
-  const { results, loading, searchPersonnel } = usePersonnelSearch();
+  const search = useCallback(
+    async (q: string) => {
+      if (!q || q.length < 2) {
+        setResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const data = await fetchResults(q);
+        setResults(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error buscando personal:", error);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchResults],
+  );
 
   useEffect(() => {
-    if (query.length >= 2) searchPersonnel(query);
-  }, [query]);
+    search(query);
+  }, [query, search]);
 
   return (
     <div className="relative w-full">
-      <label className="text-sm text-gray-700 dark:text-gray-300">
-        {label}
-      </label>
+      {label && (
+        <label className="text-sm text-gray-700 dark:text-gray-300">
+          {label}
+        </label>
+      )}
 
       <input
         type="text"
-        value={query || ""}
-        placeholder="Buscar personal..."
+        value={query}
+        placeholder={placeholder}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
@@ -64,27 +92,27 @@ export default function AutocompleteSelect<
         <div className="absolute z-20 w-full max-h-60 overflow-y-auto mt-1 bg-white border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
           {loading ? (
             <div className="p-3 text-gray-500">Buscando...</div>
-          ) : results.length === 0 ? (
-            <div className="p-3 text-gray-500">Sin resultados</div>
-          ) : (
-            results.map((p: any, index: number) => (
+          ) : results.length > 0 ? (
+            results.map((p) => (
               <div
-                key={p.id ?? index}
+                key={p.id}
                 onClick={() => {
-                  setQuery("");
+                  setQuery(getFullName(p));
                   setOpen(false);
                   onChange(p);
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
               >
-                <div className="font-medium">
-                  {p.last_name} {p.maternal_name} {p.first_name} {p.middle_name}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {p.grade_data?.grade_abbr}
-                </div>
+                <div className="font-medium">{getFullName(p)}</div>
+                {p.grade_data?.grade_abbr && (
+                  <div className="text-xs text-gray-500">
+                    {p.grade_data.grade_abbr}
+                  </div>
+                )}
               </div>
             ))
+          ) : (
+            <div className="p-3 text-gray-500">Sin resultados</div>
           )}
         </div>
       )}

@@ -8,9 +8,6 @@ interface FileCountResponse {
 }
 
 export const FilePersonnelService = {
-  // list() {
-  //   return api.get(BASE_URL);
-  // },
   list(params?: any) {
     return api.get(BASE_URL, { params });
   },

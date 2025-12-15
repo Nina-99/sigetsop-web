@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useAuth, useModal } from "../../@core";
-import { Input, Label } from "../form";
-import { Button, Modal, PasswordModal, ProfileModal } from "../ui";
+import { useAuth } from "../../@core";
+import { PasswordModal, ProfileModal } from "../ui";
 import { Users } from "../../services/auth";
 
 export default function UserInfoCard() {

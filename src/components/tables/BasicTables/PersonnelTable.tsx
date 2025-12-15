@@ -13,6 +13,13 @@ import React from "react";
 
 const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
+type Column<T> = {
+  key: string;
+  label: string;
+  bold?: boolean;
+  getter?: (row: T) => string;
+};
+
 const columns = [
   { key: "grade_data.grade_abbr", label: "Grado", bold: true },
   { key: "last_name", label: "Apellido Paterno" },
@@ -37,6 +44,13 @@ const columns = [
   { key: "actions", label: "Acciones" },
 ];
 
+type PersonnelListParams = {
+  limit: number;
+  offset: number;
+  search?: string;
+  filter_status?: string;
+};
+
 const FILTERS = [
   { value: "active", label: "Activos" },
   { value: "inactive", label: "Eliminados" },
@@ -59,28 +73,21 @@ export default function PersonnelTable() {
     null,
   );
 
-  //NOTE: *** CÁLCULOS PRINCIPALES DE PAGINACIÓN REMOTA ***
-
-  // ITEMS POR PÁGINA REALES (limit en la API)
   const itemsPerPageActual = useMemo(() => {
     return itemsPerPages === "all"
       ? totalItemsCount
       : (itemsPerPages as number);
   }, [itemsPerPages, totalItemsCount]);
 
-  // CÁLCULO DEL OFFSET (offset en la API)
   const currentOffset = useMemo(() => {
     if (itemsPerPages === "all") return 0;
     return (currentPage - 1) * (itemsPerPages as number);
   }, [currentPage, itemsPerPages]);
 
-  // CÁLCULO DEL TOTAL DE PÁGINAS (usando el conteo total del backend)
   const totalPages = useMemo(() => {
     if (itemsPerPages === "all") return 1;
     return Math.ceil(totalItemsCount / itemsPerPageActual);
   }, [totalItemsCount, itemsPerPageActual, itemsPerPages]);
-
-  //NOTE: *** FUNCIÓN DE FETCHING CON PAGINACIÓN Y FILTROS ***
 
   const fetchData = async (
     limit: number | "all",
@@ -90,23 +97,17 @@ export default function PersonnelTable() {
   ) => {
     setLoading(true);
     try {
-      let params: Record<string, any> = {};
+      const limitParam = limit === "all" ? 10000 : limit;
+      const offsetParam = limit === "all" ? 0 : offset;
 
-      if (limit === "all") {
-        params.limit = 5000;
-        params.offset = 0;
-      } else {
-        params.limit = limit;
-        params.offset = offset;
-      }
-      params.filter_status = status;
-
-      if (search) {
-        params.search = search;
-      }
+      const params: PersonnelListParams = {
+        limit: limitParam,
+        offset: offsetParam,
+        search: search.trim() || undefined,
+        filter_status: status === "active" ? "True" : "False",
+      };
 
       const response = await PersonnelService.list(params);
-
       setCurrentData(response.data.results);
       setTotalItemsCount(response.data.count);
     } catch (error) {
@@ -116,15 +117,13 @@ export default function PersonnelTable() {
     }
   };
 
-  //NOTE: *** useEffect para disparar el fetching cuando cambian los parámetros ***
+  // 🔹 debounce de 2000ms para la búsqueda
   useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
-      return;
-    }
-
-    fetchData(itemsPerPages, currentOffset, filterStatus, searchTerm);
-  }, [itemsPerPages, currentPage, currentOffset, filterStatus, searchTerm]);
+    const delayDebounce = setTimeout(() => {
+      fetchData(itemsPerPages, currentOffset, filterStatus, searchTerm);
+    }, 2000);
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm, itemsPerPages, currentOffset, filterStatus]);
 
   const paginate = (pageNumber: number) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
@@ -139,7 +138,6 @@ export default function PersonnelTable() {
   ) => {
     const value = event.target.value;
     const newItemsPerPage = value === "all" ? "all" : Number(value);
-
     setItemsPerPages(newItemsPerPage);
     setCurrentPage(1);
   };
@@ -153,92 +151,56 @@ export default function PersonnelTable() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
   const getValue = (
     personnel: Personnel,
     col: { key: string; getter?: (personnel: Personnel) => string },
   ) => {
-    if (col.getter) {
-      return col.getter(personnel);
-    }
-
+    if (col.getter) return col.getter(personnel);
     const path = col.key;
     const parts = path.split(".");
-    let acc: any = personnel;
+    let acc: unknown = personnel;
 
     for (const part of parts) {
-      if (acc === null || acc === undefined) {
-        return "";
-      }
+      if (acc === null || acc === undefined) return "";
+
+      if (typeof acc !== "object") return "";
+
+      const record = acc as Record<string, unknown>;
 
       const arrayMatch = part.match(/(.*)\[(\d+)\]$/);
-
       if (arrayMatch) {
         const key = arrayMatch[1];
         const index = parseInt(arrayMatch[2]);
 
-        if (Array.isArray(acc[key]) && acc[key].length > index) {
-          acc = acc[key][index];
+        const value = record[key];
+        if (Array.isArray(value) && value.length > index) {
+          acc = value[index];
         } else {
           return "";
         }
       } else {
-        acc = acc[part];
+        acc = record[part];
       }
     }
-
     return acc ?? "";
   };
 
   const pageRange = useMemo(() => {
     const range = [];
     const maxVisiblePages = 7;
-
     if (totalPages <= 1) return [];
-
     if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        range.push(i);
-      }
+      for (let i = 1; i <= totalPages; i++) range.push(i);
     } else {
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
-
       range.push(1);
-
-      if (startPage > 2) {
-        range.push("...");
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        if (i > 1 && i < totalPages) {
-          range.push(i);
-        }
-      }
-
-      if (endPage < totalPages - 1) {
-        range.push("...");
-      }
-
-      if (totalPages > 1) {
-        range.push(totalPages);
-      }
+      if (startPage > 2) range.push("...");
+      for (let i = startPage; i <= endPage; i++)
+        if (i > 1 && i < totalPages) range.push(i);
+      if (endPage < totalPages - 1) range.push("...");
+      if (totalPages > 1) range.push(totalPages);
     }
-
     return Array.from(new Set(range));
   }, [totalPages, currentPage]);
 
@@ -267,18 +229,14 @@ export default function PersonnelTable() {
       !window.confirm(
         `¿Estás seguro de que deseas ${action} a ${personnel.first_name} ${personnel.last_name}?`,
       )
-    ) {
+    )
       return;
-    }
-
     try {
-      const updatedPersonnel = await PersonnelService.update(personnel.id, {
+      await PersonnelService.update(personnel.id, {
         ...personnel,
         is_active: newState,
       });
-
       fetchData(itemsPerPages, currentOffset, filterStatus, searchTerm);
-
       console.log(`Personal ${action} correctamente.`);
     } catch (error) {
       console.error(`Error al ${action} personal:`, error);
@@ -298,6 +256,18 @@ export default function PersonnelTable() {
   const itemsDisplayedCount = currentData.length;
   const startItem = itemsDisplayedCount > 0 ? currentOffset + 1 : 0;
   const endItem = currentOffset + itemsDisplayedCount;
+
+  // --- Atajo de teclado ---
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   if (loading)
     return <div className="p-5 dark:text-gray-300">Cargando personal...</div>;
@@ -327,7 +297,7 @@ export default function PersonnelTable() {
                             value={option}
                             className="text-gray-500 dark:bg-gray-900 dark:text-gray-400"
                           >
-                            {option === "all" ? "Todos" : option}
+                            {option}
                           </option>
                         ))}
                       </select>
@@ -421,7 +391,7 @@ export default function PersonnelTable() {
                         value={searchTerm}
                         onChange={(e) => {
                           setSearchTerm(e.target.value);
-                          setCurrentPage(1); // Resetear página al buscar
+                          setCurrentPage(1);
                         }}
                         className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[360px]"
                       />
@@ -460,7 +430,7 @@ export default function PersonnelTable() {
                     {currentData.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={columns.length}
+                          // colSpan={columns.length}
                           className="text-center py-4 text-gray-500 dark:text-gray-400"
                         >
                           No se encontraron registros{" "}

@@ -11,7 +11,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
-const columns = [
+type Column<T> = {
+  key: string;
+  label: string;
+  bold?: boolean;
+  getter?: (row: T) => string;
+};
+
+const columns: Column<FilePersonnel>[] = [
   { key: "personnel_data.identity_card", label: "C.I.", bold: true },
   { key: "personnel_data.grade_data.grade_abbr", label: "Grado" },
   { key: "personnel_data.last_name", label: "Apellido Paterno", bold: true },
@@ -25,30 +32,45 @@ const columns = [
   { key: "actions", label: "Acciones" },
 ];
 
+type FilePersonnelListParams = {
+  limit: number;
+  offset: number;
+  search?: string;
+};
+
 export default function FilePersonnelTable() {
-  const [data, setData] = useState<FilePersonnel[]>([]);
+  const [currentData, setCurrentData] = useState<FilePersonnel[]>([]);
+  const [totalItemsCount, setTotalItemsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [itemsPerPages, setItemsPerPages] = useState(10);
-  const [currentOffset, setCurrentOffset] = useState(0); // Offset para DRF
-  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentOffset, setCurrentOffset] = useState(0);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [fileToEdit, setFileToEdit] = useState<FilePersonnel | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // --- Función para obtener datos desde DRF con limit/offset ---
-  const getData = async (offset = 0, limit = itemsPerPages) => {
+  const fetchData = async (
+    limit: number | "all",
+    offset: number,
+    search: string,
+  ) => {
     setLoading(true);
     try {
-      const response = await FilePersonnelService.list({
-        limit,
-        offset,
-      });
-      setData(response.data.results);
-      setTotalCount(response.data.count);
+      const limitParam = limit === "all" ? 10000 : limit;
+      const offsetParam = limit === "all" ? 0 : offset;
+
+      const params: FilePersonnelListParams = {
+        limit: limitParam,
+        offset: offsetParam,
+        search: search,
+      };
+
+      const response = await FilePersonnelService.list(params);
+      setCurrentData(response.data.results);
+      setTotalItemsCount(response.data.count);
     } catch (error) {
       console.error("Error fetching personnel:", error);
     } finally {
@@ -56,17 +78,24 @@ export default function FilePersonnelTable() {
     }
   };
 
+  // 🔹 debounce de 2000ms para la búsqueda
   useEffect(() => {
-    getData(currentOffset, itemsPerPages);
-  }, [currentOffset, itemsPerPages]);
+    const delayDebounce = setTimeout(() => {
+      fetchData(itemsPerPages, currentOffset, searchTerm);
+    }, 2000);
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm, itemsPerPages, currentOffset]);
 
-  const totalPages = Math.ceil(totalCount / itemsPerPages);
-  const currentPage = Math.floor(currentOffset / itemsPerPages) + 1;
+  const totalPages = useMemo(
+    () => Math.ceil(totalItemsCount / itemsPerPages),
+    [totalItemsCount, itemsPerPages],
+  );
 
   const paginate = (pageNumber: number) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentOffset((pageNumber - 1) * itemsPerPages);
-    }
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+
+    setCurrentPage(pageNumber);
+    setCurrentOffset((pageNumber - 1) * itemsPerPages);
   };
 
   const handleItemsPerPageChange = (
@@ -85,84 +114,32 @@ export default function FilePersonnelTable() {
     if (col.getter) return col.getter(file);
     const path = col.key;
     const parts = path.split(".");
-    let acc: any = file;
+    let acc: unknown = file;
 
     for (const part of parts) {
       if (acc === null || acc === undefined) return "";
+
+      if (typeof acc !== "object") return "";
+
+      const record = acc as Record<string, unknown>;
 
       const arrayMatch = part.match(/(.*)\[(\d+)\]$/);
       if (arrayMatch) {
         const key = arrayMatch[1];
         const index = parseInt(arrayMatch[2]);
-        if (Array.isArray(acc[key]) && acc[key].length > index) {
-          acc = acc[key][index];
+
+        const value = record[key];
+        if (Array.isArray(value) && value.length > index) {
+          acc = value[index];
         } else {
           return "";
         }
       } else {
-        acc = acc[part];
+        acc = record[part];
       }
     }
     return acc ?? "";
   };
-
-  // --- Búsqueda y filtrado ---
-  const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
-
-    const lowerCaseSearch = searchTerm.toLowerCase().trim();
-    const hasSpace = lowerCaseSearch.includes(" ");
-
-    const prioritizedData = data
-      .map((file) => {
-        let priority = Infinity;
-
-        const fullName =
-          `${file.personnel_data?.last_name} ${file.personnel_data?.maternal_name} ${file.personnel_data?.first_name}`.toLowerCase();
-        const idCardString = String(
-          file.personnel_data?.identity_card || "",
-        ).trim();
-
-        if (hasSpace) {
-          if (fullName.includes(lowerCaseSearch)) priority = 0;
-        } else {
-          if (
-            file.personnel_data?.last_name
-              ?.toLowerCase()
-              .includes(lowerCaseSearch)
-          )
-            priority = Math.min(priority, 1);
-          if (
-            file.personnel_data?.maternal_name
-              ?.toLowerCase()
-              .includes(lowerCaseSearch)
-          )
-            priority = Math.min(priority, 2);
-          if (
-            file.personnel_data?.first_name
-              ?.toLowerCase()
-              .includes(lowerCaseSearch)
-          )
-            priority = Math.min(priority, 3);
-        }
-
-        if (idCardString.includes(lowerCaseSearch))
-          priority = Math.min(priority, 4);
-        if (
-          file.personnel_data?.units_data?.name
-            ?.toLowerCase()
-            .includes(lowerCaseSearch)
-        )
-          priority = Math.min(priority, 5);
-
-        return { file, priority };
-      })
-      .filter((item) => item.priority !== Infinity);
-
-    prioritizedData.sort((a, b) => a.priority - b.priority);
-
-    return prioritizedData.map((item) => item.file);
-  }, [data, searchTerm]);
 
   const pageRange = useMemo(() => {
     const range: (number | "...")[] = [];
@@ -197,8 +174,10 @@ export default function FilePersonnelTable() {
 
   const handleSaveFile = (savedFile: FilePersonnel) => {
     if (fileToEdit)
-      setData(data.map((u) => (u.id === savedFile.id ? savedFile : u)));
-    else setData([savedFile, ...data]);
+      setCurrentData(
+        currentData.map((u) => (u.id === savedFile.id ? savedFile : u)),
+      );
+    else setCurrentData([savedFile, ...currentData]);
   };
 
   // --- Atajo de teclado ---
@@ -295,7 +274,12 @@ export default function FilePersonnelTable() {
                         type="text"
                         placeholder="Buscar Apellidos, Nombre, CI o Unidad (ctrl k)"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          // setItemsPerPages(newItemsPerPage);
+                          setCurrentPage(1);
+                          setCurrentOffset(0);
+                        }}
                         className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[360px]"
                       />
                     </form>
@@ -321,7 +305,7 @@ export default function FilePersonnelTable() {
                   </TableHeader>
 
                   <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                    {filteredData.map((file) => {
+                    {currentData.map((file) => {
                       const documentsHasValue = getValue(
                         file,
                         columns.find((c) => c.key === "documents_has")!,
@@ -353,7 +337,7 @@ export default function FilePersonnelTable() {
                       return (
                         <TableRow key={file.id} className={rowClass}>
                           {columns.map((col) => {
-                            const cellValue = getValue(file, col as any);
+                            const cellValue = getValue(file, col);
                             if (col.key === "actions") {
                               return (
                                 <TableCell

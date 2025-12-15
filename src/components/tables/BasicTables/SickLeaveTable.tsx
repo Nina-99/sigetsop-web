@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "../../ui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { avc09, AVC09, AVC09Service } from "../../../services";
+import { AVC09, AVC09Service } from "../../../services";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
@@ -292,9 +292,6 @@ export default function SickLeaveTable() {
         }
       }
     });
-    //   await AVC09Service.update(avc09.id, {
-    //     state: avc09ToEdit?.State,
-    //   });
   };
 
   if (loading)
@@ -419,15 +416,13 @@ export default function SickLeaveTable() {
                                 className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
                               >
                                 <div className="flex items-center w-full gap-2">
-                                  <button
-                                    disabled={avc09.state === "ENTREGADO"}
-                                    onClick={() => handleEdit(avc09)}
+                                  <h3
                                     className={`px-3 py-1 rounded text-white text-sm font-semibold
-                                                ${avc09.state === "ENTREGAR" ? "bg-red-500 hover:bg-red-700" : ""}
-                                                ${avc09.state === "ENTREGADO" ? "bg-green-600 cursor-not-allowed" : ""}`}
+                                                ${avc09.state === "ENTREGAR" ? "bg-red-500" : ""}
+                                                ${avc09.state === "ENTREGADO" ? "bg-green-600" : ""}`}
                                   >
                                     {getValue(avc09, col)}
-                                  </button>
+                                  </h3>
                                 </div>
                               </TableCell>
                             );

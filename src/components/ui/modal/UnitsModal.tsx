@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Units, UnitsService } from "../../../services";
-
+import { Units, UnitsService, PersonnelService } from "../../../services";
 import { Button } from "..";
 import {
   Modal,
@@ -13,12 +12,11 @@ import { AutocompleteSelect, Input } from "../../form";
 
 interface LocalPersonnel {
   id: number;
-  last_name: string;
-  maternal_name: string;
-  first_name: string;
-  middle_name: string;
-  grade_data?: { grade_abbr: string } | null;
-  phone: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  maternal_name?: string;
+  grade_data?: { grade_abbr: string };
 }
 
 interface UnitModalProps {
@@ -57,19 +55,17 @@ export default function UnitModal({
 
   const [unitName, setUnitName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
   const [assistant, setAssistant] = useState<LocalPersonnel | null>(null);
   const [commander, setCommander] = useState<LocalPersonnel | null>(null);
 
   useEffect(() => {
     if (isEditing && unitToEdit) {
       setUnitName(unitToEdit.name || "");
-      const currentAssistant =
+      setAssistant(
         unitToEdit.assistant_data && unitToEdit.assistant_data.length > 0
           ? unitToEdit.assistant_data[0]
-          : null;
-
-      setAssistant(currentAssistant);
+          : null,
+      );
       setCommander(unitToEdit.commander_data || null);
     } else {
       setUnitName("");
@@ -91,36 +87,25 @@ export default function UnitModal({
 
     try {
       let response;
-
       if (isEditing) {
         response = await UnitsService.update(unitToEdit!.id, payload);
       } else {
         response = await UnitsService.create(payload);
       }
-
-      console.log("response ", response.data);
       onSave(response.data);
       onClose();
     } catch (error: any) {
-      console.error(`Error al guardar la unidad:`, error);
-
-      let errorMessage = "Error al guardar la unidad.";
-      if (error.response && error.response.data) {
-        console.log("Errores del servidor:", error.response.data);
-        errorMessage += ` Revise los errores específicos en la consola.`;
-      }
-      alert(errorMessage);
+      console.error("Error al guardar la unidad:", error);
+      alert("Error al guardar la unidad. Revise la consola para más detalles.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Si el modal está cerrado, no renderizar nada para optimizar
   if (!isOpen) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      {/* El Dialog de Material Tailwind tenía una clase 'size="xs"', aquí simularíamos un contenedor pequeño */}
       <ModalContent className="max-w-md w-full">
         <ModalHeader className="flex justify-between items-center p-4 border-b dark:border-white/[0.05]">
           <div>
@@ -133,7 +118,6 @@ export default function UnitModal({
                 : "Ingrese los datos para la nueva unidad."}
             </p>
           </div>
-          {/* Botón de Cerrar */}
           <button
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.05] transition"
             onClick={onClose}
@@ -143,51 +127,59 @@ export default function UnitModal({
         </ModalHeader>
 
         <form onSubmit={handleSubmit}>
-          <ModalBody className="p-5 overflow-y-scroll max-h-[70vh]">
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="unitName"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Nombre de la Unidad <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="unitName"
-                  type="text"
-                  value={unitName}
-                  onChange={(e) => setUnitName(e.target.value)}
-                  placeholder="Ej: Patrulla Motorizada 101"
-                  // required
-                  // Asume que tu componente Input maneja el estado visual de focus y hover
-                />
-              </div>
-
-              <AutocompleteSelect
-                label="Seleccionar Auxiliar"
-                value={assistant}
-                onChange={(p) => setAssistant(p)}
+          <ModalBody className="p-5 overflow-y-scroll max-h-[70vh] space-y-4">
+            {/* Nombre de la unidad */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Nombre de la Unidad <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="unitName"
+                type="text"
+                value={unitName}
+                onChange={(e) => setUnitName(e.target.value)}
+                placeholder="Ej: Patrulla Motorizada 101"
               />
+            </div>
 
-              <AutocompleteSelect
-                label="Seleccionar Comandante"
-                value={commander}
-                onChange={(p) => setCommander(p)}
-              />
-              {/* --- Aquí se agregarían más campos para Auxiliar y Comandante --- */}
+            {/* Autocomplete para Auxiliar */}
+            <AutocompleteSelect
+              label="Seleccionar Auxiliar"
+              value={assistant}
+              onChange={(p) => setAssistant(p)}
+              fetchResults={async (query) => {
+                try {
+                  const res = await PersonnelService.search(query);
+                  const data = res.data?.results ?? [];
+                  return Array.isArray(data) ? data : [];
+                } catch (err) {
+                  console.error("Error buscando Auxiliar:", err);
+                  return [];
+                }
+              }}
+            />
 
-              {/* <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                                <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Asignación de Personal</h4>
-                                // Componentes Select para Auxiliar y Comandante
-                            </div> */}
+            <AutocompleteSelect
+              label="Seleccionar Comandante"
+              value={commander}
+              onChange={(p) => setCommander(p)}
+              fetchResults={async (query) => {
+                try {
+                  const res = await PersonnelService.search(query);
+                  const data = res.data?.results ?? [];
+                  return Array.isArray(data) ? data : [];
+                } catch (err) {
+                  console.error("Error buscando Comandante:", err);
+                  return [];
+                }
+              }}
+            />
 
-              {/* Texto de ayuda general, similar al 'New to Ethereum wallets?' */}
-              <div className="pt-4">
-                <p className="text-xs text-gray-400 dark:text-gray-600">
-                  Asegúrese de que el nombre de la unidad sea único y preciso
-                  para el registro.
-                </p>
-              </div>
+            <div className="pt-4">
+              <p className="text-xs text-gray-400 dark:text-gray-600">
+                Asegúrese de que el nombre de la unidad sea único y preciso para
+                el registro.
+              </p>
             </div>
           </ModalBody>
 
@@ -202,9 +194,7 @@ export default function UnitModal({
             </Button>
             <Button
               type="submit"
-              // Asumiendo que 'primary' es tu variante principal/marca (brand-500)
               variant="primary"
-              // Asumiendo que tu Button acepta 'isLoading' y maneja la deshabilitación/spinner
               isLoading={isLoading}
               disabled={isLoading || !unitName.trim()}
             >
