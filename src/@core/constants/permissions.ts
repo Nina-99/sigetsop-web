@@ -1,6 +1,13 @@
 export const ROLE_PATHS: Record<string, string[]> = {
   Admin: ["all"],
-  Auxiliar: ["/", "/profile", "/sick-leave", "/alerts"],
+  Auxiliar: [
+    "/",
+    "/formavc09",
+    "/upload09",
+    "/profile",
+    "/sick-leave",
+    "/alerts",
+  ],
   AuxiliarSIT: [
     "/",
     "/profile",
@@ -29,7 +36,7 @@ export const ROLE_PATHS: Record<string, string[]> = {
     "/units",
     "/alerts",
   ],
-  Invitado: ["/sick-leave"],
+  Invitado: ["/"],
 };
 
 export const PUBLIC_PATHS = ["/signin", "/signup", "/error-404", "/blank"];

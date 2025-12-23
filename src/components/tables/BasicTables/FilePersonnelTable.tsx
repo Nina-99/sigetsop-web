@@ -290,13 +290,13 @@ export default function FilePersonnelTable() {
               {/* Tabla */}
               <div className="max-w-full overflow-x-auto custom-scrollbar">
                 <Table>
-                  <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                  <TableHeader>
                     <TableRow>
                       {columns.map((col) => (
                         <TableCell
                           key={col.key}
                           isHeader
-                          className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                          className=" px-5 py-3 font-medium text-white dark:text-white text-center border border-b-5 border-gray-100 dark:border-white/[0.4] bg-lime-800"
                         >
                           {col.label}
                         </TableCell>
@@ -326,13 +326,13 @@ export default function FilePersonnelTable() {
                         "hover:bg-gray-50 dark:hover:bg-white/[0.03]";
                       if (hasObservation)
                         rowClass =
-                          "bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30";
+                          "bg-red-200 dark:bg-red-800 hover:bg-red-300 dark:hover:bg-red-900";
                       else if (!hasDocuments && !hasObservation)
                         rowClass =
-                          "bg-amber-100 dark:bg-amber-900/20 hover:bg-amber-200 dark:hover:bg-amber-900/30";
+                          "bg-yellow-200 dark:bg-yellow-800 hover:bg-yellow-300 dark:hover:bg-yellow-900";
                       else if (hasDocuments && !hasObservation)
                         rowClass =
-                          "bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30";
+                          "bg-green-200 dark:bg-green-800 hover:bg-green-300 dark:hover:bg-green-900";
 
                       return (
                         <TableRow key={file.id} className={rowClass}>
@@ -342,7 +342,7 @@ export default function FilePersonnelTable() {
                               return (
                                 <TableCell
                                   key={col.key}
-                                  className="px-1 py-3 text-gray-500 text-theme-sm dark:text-gray-400"
+                                  className="px-1 py-3 text-gray-500 text-theme-sm dark:text-gray-400 border border-lime-700"
                                 >
                                   <div className="flex gap-2">
                                     <button
@@ -372,7 +372,7 @@ export default function FilePersonnelTable() {
                             return (
                               <TableCell
                                 key={col.key}
-                                className={`px-1 py-3 text-theme-sm ${
+                                className={`border border-lime-700 px-1 py-3 text-theme-sm ${
                                   col.bold
                                     ? "font-bold text-gray-900 dark:text-white"
                                     : "text-gray-700 dark:text-gray-300"

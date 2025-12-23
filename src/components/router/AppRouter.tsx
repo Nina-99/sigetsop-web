@@ -157,6 +157,9 @@ export function AppRouter() {
               </ProtectedRoute>
             }
           />
+          {/* Charts */}
+          <Route path="/line-chart" element={<LineChart />} />
+          <Route path="/bar-chart" element={<BarChart />} />
           <Route path="/mobile-link/:token" element={<AVC09MobileUpload />} />
         </Route>
 

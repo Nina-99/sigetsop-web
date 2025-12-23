@@ -397,7 +397,7 @@ export default function AVC09Table() {
                         <TableCell
                           key={`${col.key}-${col.key}`}
                           isHeader
-                          className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                          className=" px-5 py-3 font-medium text-white dark:text-white text-center border border-b-5 border-gray-100 dark:border-white/[0.4] bg-lime-800"
                         >
                           {col.label}
                         </TableCell>
@@ -408,13 +408,16 @@ export default function AVC09Table() {
                   {/* Table Body */}
                   <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                     {currentItems.map((avc09) => (
-                      <TableRow key={avc09.id}>
+                      <TableRow
+                        key={avc09.id}
+                        className="hover:bg-lime-200 dark:hover:bg-lime-700"
+                      >
                         {columns.map((col) => {
                           if (col.key === "state") {
                             return (
                               <TableCell
                                 key={col.key}
-                                className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
+                                className="border border-lime-700 px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
                               >
                                 <div className="flex items-center w-full gap-2">
                                   <button
@@ -433,7 +436,7 @@ export default function AVC09Table() {
                           return (
                             <TableCell
                               key={col.key}
-                              className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
+                              className="border border-lime-700 px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
                             >
                               {getValue(avc09, col)}
                             </TableCell>

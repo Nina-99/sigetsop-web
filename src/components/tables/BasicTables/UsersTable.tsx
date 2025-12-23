@@ -126,7 +126,6 @@ export default function UsersTable() {
     }
   };
 
-  // ... (handleItemsPerPageChange y lógica de atajo de teclado se mantienen igual) ...
   const handleItemsPerPageChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
@@ -152,13 +151,10 @@ export default function UsersTable() {
     };
   }, []);
 
-  // ... (getValue y pageRange se mantienen igual) ...
-
   const getValue = (
     users: Users,
     col: { key: string; getter?: (users: Users) => string },
   ) => {
-    // ... (Tu lógica de getValue se mantiene igual) ...
     if (col.getter) {
       return col.getter(users);
     }
@@ -289,8 +285,7 @@ export default function UsersTable() {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setUsersToEdit(null); // Limpiar la unidad al cerrar
-    // Recargar o asegurar que el registro guardado se integre (handleSave ya lo hace)
+    setUsersToEdit(null);
   };
 
   const handleSave = (savedUsers: Users) => {
@@ -457,14 +452,13 @@ export default function UsersTable() {
               </div>
               <div className="max-w-full overflow-x-auto custom-scrollbar">
                 <Table>
-                  {/* Table Header (Mantenido) */}
                   <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                     <TableRow>
                       {columns.map((col) => (
                         <TableCell
                           key={`${col.key}-${col.key}`}
                           isHeader
-                          className=" px-5 py-3 font-medium text-gray-500 text-start border border-gray-100 dark:border-white/[0.05]"
+                          className=" px-5 py-3 font-medium text-white dark:text-white text-center border border-b-5 border-gray-100 dark:border-white/[0.4] bg-lime-800"
                         >
                           {col.label}
                         </TableCell>
@@ -478,7 +472,7 @@ export default function UsersTable() {
                       <TableRow>
                         <TableCell
                           colSpan={columns.length}
-                          className="text-center py-4 text-gray-500 dark:text-gray-400"
+                          className="border border-lime-700 text-center py-4 text-gray-500 dark:text-gray-400"
                         >
                           No se encontraron registros{" "}
                           {filterStatus === "active" ? "activos" : "eliminados"}
@@ -487,13 +481,16 @@ export default function UsersTable() {
                       </TableRow>
                     ) : (
                       currentItems.map((person) => (
-                        <TableRow key={person.id}>
+                        <TableRow
+                          key={person.id}
+                          className="hover:bg-lime-200 dark:hover:bg-lime-700"
+                        >
                           {columns.map((col) => {
                             if (col.key === "actions") {
                               return (
                                 <TableCell
                                   key={col.key}
-                                  className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
+                                  className="border border-lime-700 px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
                                 >
                                   <div className="flex items-center w-full gap-2">
                                     {/* Botón de Editar/Restaurar */}
@@ -550,11 +547,10 @@ export default function UsersTable() {
                                       <button
                                         onClick={() =>
                                           toggleActiveStatus(person, false)
-                                        } // Eliminar Lógico
+                                        }
                                         title="Eliminar"
                                         className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                                       >
-                                        {/* SVG de Eliminar (Mantener) */}
                                         <svg
                                           className="size-5"
                                           width="1em"
@@ -575,11 +571,10 @@ export default function UsersTable() {
                                 </TableCell>
                               );
                             }
-                            // Resto de celdas (Mantenido)
                             return (
                               <TableCell
                                 key={col.key}
-                                className={`px-1 py-3 text-gray-500 text-theme-sm border border-gray-100 dark:border-white/[0.05] dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500 whitespace-nowrap"}`}
+                                className={`border border-lime-700 px-1 py-3 text-gray-500 text-theme-sm border border-gray-100 dark:border-white/[0.05] dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500 whitespace-nowrap"}`}
                               >
                                 {getValue(person, col)}
                               </TableCell>
@@ -591,8 +586,6 @@ export default function UsersTable() {
                   </TableBody>
                 </Table>
               </div>
-              {/* Paginación (Mantenida) */}
-              {/* ... (La lógica de paginación se mantiene igual) ... */}
               <div className="border border-t-0 rounded-b-xl border-gray-100 py-4 pl-[18px] pr-4 dark:border-white/[0.05]">
                 <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between">
                   <div className="pb-3 xl:pb-0">

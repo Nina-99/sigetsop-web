@@ -29,7 +29,8 @@ const Logo = ({ fontSize, logoSize, showText }: LogoProps) => {
       {showText && (
         <LogoText
           fontSize={fontSize}
-          style={{ color: theme === "dark" ? "white" : "#000000" }}
+          // style={{ color: theme === "dark" ? "white" : "#000000" }}
+          style={{ color: theme === "dark" ? "white" : "#d0d5dd" }}
         >
           {themeConfig.templateName}
         </LogoText>

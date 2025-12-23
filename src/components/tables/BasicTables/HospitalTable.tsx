@@ -326,7 +326,7 @@ export default function HospitalTable() {
                         <TableCell
                           key={`${col.key}-${col.key}`}
                           isHeader
-                          className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                          className=" px-5 py-3 font-medium text-white dark:text-white text-center border border-b-5 border-gray-100 dark:border-white/[0.4] bg-lime-800"
                         >
                           {col.label}
                         </TableCell>
@@ -337,13 +337,16 @@ export default function HospitalTable() {
                   {/* Table Body */}
                   <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                     {currentItems.map((hospital) => (
-                      <TableRow key={hospital.id}>
+                      <TableRow
+                        key={hospital.id}
+                        className="hover:bg-lime-200 dark:hover:bg-lime-700"
+                      >
                         {columns.map((col) => {
                           if (col.key === "actions") {
                             return (
                               <TableCell
                                 key={col.key}
-                                className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
+                                className={`border border-lime-700 px-1 py-3 text-gray-800 text-theme-sm dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500"}`}
                               >
                                 <div className="flex items-center w-full gap-2">
                                   <button
@@ -393,7 +396,7 @@ export default function HospitalTable() {
                           return (
                             <TableCell
                               key={col.key}
-                              className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
+                              className={`border border-lime-700 px-1 py-3 text-gray-800 text-theme-sm dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500"}`}
                             >
                               {getValue(hospital, col)}
                             </TableCell>

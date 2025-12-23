@@ -343,13 +343,13 @@ export default function UnitsTable() {
               <div className="max-w-full overflow-x-auto custom-scrollbar">
                 <Table>
                   {/* Table Header */}
-                  <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+                  <TableHeader>
                     <TableRow>
                       {columns.map((col) => (
                         <TableCell
                           key={`${col.key}-${col.key}`}
                           isHeader
-                          className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                          className=" px-5 py-3 font-medium text-white dark:text-white text-center border border-b-5 border-gray-100 dark:border-white/[0.4] bg-lime-800"
                         >
                           {col.label}
                         </TableCell>
@@ -360,14 +360,17 @@ export default function UnitsTable() {
                   {/* Table Body */}
                   <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                     {currentItems.map((unit) => (
-                      <TableRow key={unit.id}>
+                      <TableRow
+                        key={unit.id}
+                        className="hover:bg-lime-200 dark:hover:bg-lime-700"
+                      >
                         {columns.map((col) => {
                           if (col.key === "actions") {
                             // Celda para las acciones (Editar y Eliminar)
                             return (
                               <TableCell
                                 key={col.key}
-                                className="px-1 py-3 text-gray-500 text-theme-sm dark:text-gray-400"
+                                className="px-1 py-3 text-gray-500 text-theme-sm dark:text-gray-400 border border-lime-700"
                               >
                                 <div className="flex gap-2">
                                   <button
@@ -417,7 +420,7 @@ export default function UnitsTable() {
                           return (
                             <TableCell
                               key={col.key}
-                              className={`px-1 py-3 text-gray-500 text-theme-sm dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500"}`}
+                              className={`border border-lime-700 px-1 py-3 text-gray-800 text-theme-sm dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500"}`}
                             >
                               {getValue(unit, col)}
                             </TableCell>

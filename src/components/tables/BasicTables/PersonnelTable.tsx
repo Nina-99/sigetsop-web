@@ -417,7 +417,7 @@ export default function PersonnelTable() {
                         <TableCell
                           key={col.key}
                           isHeader
-                          className=" px-5 py-3 font-medium text-gray-500 text-start border border-gray-100 dark:border-white/[0.05]"
+                          className=" px-5 py-3 font-medium text-white dark:text-white text-center border border-b-5 border-gray-100 dark:border-white/[0.4] bg-lime-800"
                         >
                           {col.label}
                         </TableCell>
@@ -440,13 +440,16 @@ export default function PersonnelTable() {
                       </TableRow>
                     ) : (
                       currentData.map((person) => (
-                        <TableRow key={`person-${person.id}`}>
+                        <TableRow
+                          key={`person-${person.id}`}
+                          className="hover:bg-lime-200 dark:hover:bg-lime-700"
+                        >
                           {columns.map((col) => {
                             if (col.key === "actions") {
                               return (
                                 <TableCell
                                   key={col.key}
-                                  className=" px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap"
+                                  className="px-1 py-3 text-gray-500 text-theme-sm dark:text-gray-400 border border-lime-700"
                                 >
                                   <div className="flex items-center w-full gap-2">
                                     {/* Botón de Editar/Restaurar */}
@@ -528,7 +531,7 @@ export default function PersonnelTable() {
                             return (
                               <TableCell
                                 key={col.key}
-                                className={`px-1 py-3 text-gray-500 text-theme-sm border border-gray-100 dark:border-white/[0.05] dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500 whitespace-nowrap"}`}
+                                className={`px-1 py-3 text-gray-500 text-theme-sm border border-lime-700 dark:border-white/[0.05] dark:text-gray-400 ${col.bold ? "font-bold text-black dark:text-white" : "text-gray-500 whitespace-nowrap"}`}
                               >
                                 {getValue(person, col)}
                               </TableCell>

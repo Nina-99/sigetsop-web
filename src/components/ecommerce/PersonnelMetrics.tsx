@@ -45,7 +45,7 @@ export default function PersonnelMetrics() {
 
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-2xl text-gray-700 dark:text-gray-300">
               Personal Policial con File
             </span>
             {loading ? (
@@ -73,7 +73,7 @@ export default function PersonnelMetrics() {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-2xl text-gray-700 dark:text-gray-300">
               Bajas por Recoger
             </span>
             {loading ? (
