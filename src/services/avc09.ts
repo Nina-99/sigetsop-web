@@ -40,12 +40,33 @@ export const AVC09Service = {
     return api.get<AVC09CountResponse>(`${BASE_URL}count_delivery`);
   },
 
-  getStatics() {
-    return api.get<ExtendedLeavesStats>(`${BASE_URL}get_statics`);
+  getStatics(year?: number) {
+    const url = year 
+      ? `${BASE_URL}get_statics?year=${year}` 
+      : `${BASE_URL}get_statics`;
+    return api.get<ExtendedLeavesStats>(url);
   },
 
   getTopUnits() {
     return api.get<ExtendedLeavesStats>(`${BASE_URL}get_top_units`);
+  },
+
+  exportCSV(params?: any) {
+    return api.get(`${BASE_URL}export/csv/`, {
+      params,
+      responseType: "blob",
+    });
+  },
+
+  exportPDF(params?: any) {
+    return api.get(`${BASE_URL}export/pdf/`, {
+      params,
+      responseType: "blob",
+    });
+  },
+
+  exportAllJSON(params?: any) {
+    return api.get(`${BASE_URL}export/all/`, { params });
   },
 };
 

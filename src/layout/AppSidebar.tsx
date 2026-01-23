@@ -3,14 +3,18 @@ import { Link, useLocation } from "react-router-dom";
 
 // Iconos e imports existentes
 import {
+  BabyIcon,
   CalenderIcon,
   ChevronDownIcon,
+  DocsIcon,
+  FileIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
   PageIcon,
   PieChartIcon,
   TableIcon,
+  TaskIcon,
   UserCircleIcon,
 } from "../icons";
 import SidebarWidget from "./SidebarWidget";
@@ -45,16 +49,34 @@ const navItems: NavItem[] = [
     icon: <ListIcon />,
   },
   {
+    icon: <BabyIcon />,
+    name: "Asignaciones Familiares",
+    subItems: [
+      { name: "Control Prenatal", path: "/prenatal-records", pro: false },
+      { name: "Natalidad y Lactancia", path: "/natal-data", pro: false },
+    ],
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Bajas Medicas",
+    subItems: [
+      { name: "Bajas", path: "/sick-leave", pro: false },
+      { name: "AVC09", path: "/avc09", pro: false },
+    ],
+  },
+  {
+    icon: <FileIcon />,
+    name: "File",
+    path: "/filepersonnel",
+  },
+  {
     icon: <TableIcon />,
     name: "Tablas",
     subItems: [
       { name: "Usuarios", path: "/users", pro: false },
-      { name: "Bajas", path: "/sick-leave", pro: false },
-      { name: "AVC09", path: "/avc09", pro: false },
       { name: "Hospital", path: "/hospitals", pro: false },
       { name: "Personal", path: "/personnel", pro: false },
       { name: "Unidades", path: "/units", pro: false },
-      { name: "File", path: "/filepersonnel", pro: false },
     ],
   },
 ];

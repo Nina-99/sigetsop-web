@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AVC09, AVC09Service } from "../../../services";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { DownloadIcon } from "../../../icons";
 
 const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
@@ -241,6 +242,72 @@ export default function SickLeaveTable() {
     return Array.from(new Set(range));
   }, [totalPages, currentPage]);
 
+  const handleExportCSV = async () => {
+    try {
+      Swal.fire({
+        title: "Exportando CSV...",
+        text: "Por favor espere mientras se genera el archivo.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+      const response = await AVC09Service.exportCSV({ 
+        filter_state: "ENTREGAR" // Solo exportar bajas pendientes de entrega
+      });
+      const blob = new Blob([response.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bajas_avc09_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      Swal.fire({
+        icon: "success",
+        title: "¡Éxito!",
+        text: "El archivo CSV ha sido descargado correctamente.",
+        timer: 3000,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo exportar el archivo CSV. Inténtelo de nuevo.",
+      });
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      Swal.fire({
+        title: "Exportando PDF...",
+        text: "Por favor espere mientras se genera el archivo.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+      const response = await AVC09Service.exportPDF({ 
+        filter_state: "ENTREGAR" // Solo exportar bajas pendientes de entrega
+      });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bajas_avc09_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      Swal.fire({
+        icon: "success",
+        title: "¡Éxito!",
+        text: "El archivo PDF ha sido descargado correctamente.",
+        timer: 3000,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo exportar el archivo PDF. Inténtelo de nuevo.",
+      });
+    }
+  };
+
   const handleCreate = () => {
     navigate("/upload09");
   };
@@ -385,6 +452,24 @@ export default function SickLeaveTable() {
                   >
                     + Nuevo
                   </Button>
+
+                  {/* Botones de Exportación */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleExportCSV}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg transition px-4 py-3 ring-1 ring-inset ring-gray-300 hover:bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:ring-gray-700 dark:hover:bg-green-900/[0.3] dark:hover:text-green-300"
+                    >
+                      <DownloadIcon className="w-4 h-4" />
+                      CSV
+                    </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg transition px-4 py-3 ring-1 ring-inset ring-gray-300 hover:bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:ring-gray-700 dark:hover:bg-red-900/[0.3] dark:hover:text-red-300"
+                    >
+                      <DownloadIcon className="w-4 h-4" />
+                      PDF
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="max-w-full overflow-x-auto custom-scrollbar">

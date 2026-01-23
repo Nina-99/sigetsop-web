@@ -4,6 +4,7 @@ import { ReactComponent as CloseIcon } from "./close.svg?react";
 import { ReactComponent as BoxIcon } from "./box.svg?react";
 import { ReactComponent as CheckCircleIcon } from "./check-circle.svg?react";
 import { ReactComponent as AlertIcon } from "./alert.svg?react";
+import { ReactComponent as BabyIcon } from "./baby.svg?react";
 import { ReactComponent as InfoIcon } from "./info.svg?react";
 import { ReactComponent as ErrorIcon } from "./info-error.svg?react";
 import { ReactComponent as BoltIcon } from "./bolt.svg?react";
@@ -72,6 +73,7 @@ export {
   CloseIcon,
   CheckCircleIcon,
   AlertIcon,
+  BabyIcon,
   InfoIcon,
   ErrorIcon,
   ArrowUpIcon,

@@ -17,8 +17,10 @@ import {
   Images,
   LineChart,
   MobileAuthConsumer,
+  NatalDataTablePage,
   NotFound,
   PersonnelTables,
+  PrenatalRecordsPage,
   SickLeaveTables,
   SignIn,
   SignUp,
@@ -40,7 +42,11 @@ export function AppRouter() {
       <Routes>
         <Route element={<AppLayout />}>
           {/* Rutas Comunes */}
-          <Route index path="/" element={<Home />} />
+          <Route index path="/" element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          } />
           <Route
             path="/profile"
             element={
@@ -134,6 +140,22 @@ export function AppRouter() {
             }
           />
           <Route
+            path="/prenatal-records"
+            element={
+              <ProtectedRoute>
+                <PrenatalRecordsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/natal-data"
+            element={
+              <ProtectedRoute>
+                <NatalDataTablePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/units"
             element={
               <ProtectedRoute>
@@ -164,6 +186,8 @@ export function AppRouter() {
         </Route>
 
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/register" element={<SignUp />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

@@ -7,7 +7,18 @@ import { Button } from "../ui";
 import { auth } from "../../services";
 import { useAuth } from "../../@core";
 import { jwtDecode } from "jwt-decode";
-import Swal from "sweetalert2";
+import {
+  showLoginLoading,
+  showLoginSuccess,
+  showLoginError,
+  showConnectionError,
+  showServerError,
+  showDatabaseError,
+  showUserInactiveError,
+  showTimeoutError,
+  showEmptyFieldsError,
+  closeSwal,
+} from "../../utils/swalMessages";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,16 +30,58 @@ export default function SignInForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validación de campos vacíos
+    if (!username.trim() || !password.trim()) {
+      showEmptyFieldsError();
+      return;
+    }
+
+    // Mostrar loading
+    showLoginLoading();
+
     try {
       const response = await auth(username, password);
+      
       if (response.access && response.refresh) {
-        localStorage.setItem("token", response);
+        // Cerrar loading
+        closeSwal();
+        
+        // Guardar token y datos de usuario
+        localStorage.setItem("token", JSON.stringify(response));
         login(response);
+        
+        // Decodificar token para obtener datos del usuario
+        const decodedToken = jwtDecode<Record<string, unknown>>(response.access);
+        console.log("Usuario logueado:", decodedToken);
+        
+        // Mostrar mensaje de éxito
+        await showLoginSuccess();
+        
+        // Redirigir al dashboard
         navigate("/");
-        jwtDecode<Record<string, unknown>>(response.access);
       }
     } catch (err) {
-      Swal.fire({ icon: "error", text: `${err}` });
+      // Cerrar loading
+      closeSwal();
+      
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      
+      // Manejo específico de errores
+      if (errorMessage.includes("No se puede conectar al servidor")) {
+        showConnectionError();
+      } else if (errorMessage.includes("Tiempo de espera agotado")) {
+        showTimeoutError();
+      } else if (errorMessage.includes("Usuario desactivado")) {
+        showUserInactiveError();
+      } else if (errorMessage.includes("base de datos")) {
+        showDatabaseError();
+      } else if (errorMessage.includes("servidor") || errorMessage.includes("interno")) {
+        showServerError();
+      } else {
+        // Error genérico de login
+        showLoginError(errorMessage);
+      }
     }
   };
 

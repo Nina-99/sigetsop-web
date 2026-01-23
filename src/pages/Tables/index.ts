@@ -5,3 +5,4 @@ export { default as PersonnelTables } from "./PersonnelTables";
 export { default as SickLeaveTables } from "./SickLeaveTables";
 export { default as UnitsTables } from "./UnitsTables";
 export { default as UsersTables } from "./UsersTables";
+export { default as NatalDataTablePage } from "./NatalDataTablePage";

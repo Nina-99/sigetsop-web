@@ -12,7 +12,7 @@ interface Personnel {
 interface AutocompleteSelectProps<T extends { id?: number | string }> {
   label?: string;
   value: T | null;
-  onChange: (selected: T) => void;
+  onChange: (selected: T | null) => void;
   placeholder?: string;
   fetchResults: (query: string) => Promise<T[]>;
 }
@@ -82,8 +82,13 @@ export default function AutocompleteSelect<T extends Personnel>({
         value={query}
         placeholder={placeholder}
         onChange={(e) => {
-          setQuery(e.target.value);
+          const newQuery = e.target.value;
+          setQuery(newQuery);
           setOpen(true);
+
+          if (!newQuery.trim()) {
+            onChange(null); // Notificar al padre si el campo se borra
+          }
         }}
         className="w-full p-2 mt-1 border rounded-lg bg-white dark:bg-gray-900 dark:text-gray-200"
       />

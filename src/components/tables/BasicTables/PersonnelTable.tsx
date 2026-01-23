@@ -10,6 +10,8 @@ import {
 import { Personnel, PersonnelService } from "../../../services";
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
+import Swal from "sweetalert2";
+import { DownloadIcon } from "../../../icons";
 
 const ITEMS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
@@ -207,6 +209,68 @@ export default function PersonnelTable() {
   const handleCreate = () => {
     setPersonnelToEdit(null);
     setIsModalOpen(true);
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      Swal.fire({
+        title: "Exportando CSV...",
+        text: "Por favor espere mientras se genera el archivo.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+      const response = await PersonnelService.exportCSV({ filter_status: filterStatus });
+      const blob = new Blob([response.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `personal_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      Swal.fire({
+        icon: "success",
+        title: "¡Éxito!",
+        text: "El archivo CSV ha sido descargado correctamente.",
+        timer: 3000,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo exportar el archivo CSV. Inténtelo de nuevo.",
+      });
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      Swal.fire({
+        title: "Exportando PDF...",
+        text: "Por favor espere mientras se genera el archivo.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+      const response = await PersonnelService.exportPDF({ filter_status: filterStatus });
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `personal_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      Swal.fire({
+        icon: "success",
+        title: "¡Éxito!",
+        text: "El archivo PDF ha sido descargado correctamente.",
+        timer: 3000,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo exportar el archivo PDF. Inténtelo de nuevo.",
+      });
+    }
   };
 
   const handleEdit = (personnel: Personnel) => {
@@ -407,9 +471,95 @@ export default function PersonnelTable() {
                       + Nuevo
                     </Button>
                   )}
+
+                  {/* Botones de Exportación */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleExportCSV}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg transition px-4 py-3 ring-1 ring-inset ring-gray-300 hover:bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:ring-gray-700 dark:hover:bg-green-900/[0.3] dark:hover:text-green-300"
+                    >
+                      <DownloadIcon className="w-4 h-4" />
+                      CSV
+                    </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg transition px-4 py-3 ring-1 ring-inset ring-gray-300 hover:bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:ring-gray-700 dark:hover:bg-red-900/[0.3] dark:hover:text-red-300"
+                    >
+                      <DownloadIcon className="w-4 h-4" />
+                      PDF
+                    </Button>
+                  </div>
                 </div>
               </div>
-              <div className="max-w-full overflow-x-auto custom-scrollbar">
+
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-4">
+                {currentData.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    No se encontraron registros{" "}
+                    {filterStatus === "active" ? "activos" : "eliminados"}.
+                  </div>
+                ) : (
+                  currentData.map((person) => (
+                    <div
+                      key={`person-card-${person.id}`}
+                      className="bg-white dark:bg-white/[0.03] p-4 rounded-lg border border-gray-200 dark:border-white/[0.05] shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {person.grade_data?.grade_abbr} {person.first_name}{" "}
+                          {person.last_name}
+                        </h3>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleEdit(person)}
+                            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(person.id)}
+                            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                          >
+                            {filterStatus === "active"
+                              ? "Eliminar"
+                              : "Restaurar"}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="font-medium">C.I.:</span>{" "}
+                          {person.identity_card}
+                        </div>
+                        <div>
+                          <span className="font-medium">Edad:</span>{" "}
+                          {person.age}
+                        </div>
+                        <div>
+                          <span className="font-medium">Género:</span>{" "}
+                          {person.genre}
+                        </div>
+                        <div>
+                          <span className="font-medium">Celular:</span>{" "}
+                          {person.phone}
+                        </div>
+                        <div>
+                          <span className="font-medium">Destino:</span>{" "}
+                          {person.units_data?.name}
+                        </div>
+                        <div>
+                          <span className="font-medium">Dirección:</span>{" "}
+                          {person.address}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block max-w-full overflow-x-auto custom-scrollbar">
                 <Table>
                   <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                     <TableRow>
@@ -442,7 +592,7 @@ export default function PersonnelTable() {
                       currentData.map((person) => (
                         <TableRow
                           key={`person-${person.id}`}
-                          className="hover:bg-lime-200 dark:hover:bg-lime-700"
+                          className="hover:bg-slate-200 dark:hover:bg-slate-700"
                         >
                           {columns.map((col) => {
                             if (col.key === "actions") {

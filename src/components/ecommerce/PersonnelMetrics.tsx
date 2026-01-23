@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AxiosError } from "axios";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -18,19 +19,30 @@ export default function PersonnelMetrics() {
   const [totalAVC09, setTotalAVC09] = useState<number | null>(null);
   const [totalDelivery, setTotalDelivery] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCount = async () => {
       setLoading(true);
-      const count = await PersonnelService.getTotalCount();
-      setTotalPersonnel(count.data.count);
-      const countFile = await FilePersonnelService.getTotalCount();
-      setTotalFile(countFile.data.count);
-      const countDelivery = await AVC09Service.getSickLeaveCount();
-      setTotalDelivery(countDelivery.data.count);
-      const countAVC09 = await AVC09Service.getTotalCount();
-      setTotalAVC09(countAVC09.data.count);
-      setLoading(false);
+      setError(null);
+      try {
+        const count = await PersonnelService.getTotalCount();
+        setTotalPersonnel(count.data.count);
+        const countFile = await FilePersonnelService.getTotalCount();
+        setTotalFile(countFile.data.count);
+        const countDelivery = await AVC09Service.getSickLeaveCount();
+        setTotalDelivery(countDelivery.data.count);
+        const countAVC09 = await AVC09Service.getTotalCount();
+        setTotalAVC09(countAVC09.data.count);
+      } catch (err: unknown) {
+        if (err instanceof AxiosError && err.response?.status === 401) {
+          setError("Usuario no autenticado. Inicie sesión para ver las métricas.");
+        } else {
+          setError("Error al cargar las métricas. Intente nuevamente.");
+        }
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchCount();
@@ -48,15 +60,19 @@ export default function PersonnelMetrics() {
             <span className="text-2xl text-gray-700 dark:text-gray-300">
               Personal Policial con File
             </span>
-            {loading ? (
-              <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                cargando ...
-              </h4>
-            ) : (
-              <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                {totalFile}
-              </h4>
-            )}
+             {loading ? (
+               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+                 cargando ...
+               </h4>
+             ) : error ? (
+               <h4 className="mt-2 font-bold text-red-500 text-title-sm">
+                 {error}
+               </h4>
+             ) : (
+               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+                 {totalFile}
+               </h4>
+             )}
           </div>
           <Badge color="success">
             <ArrowUpIcon />
@@ -76,15 +92,19 @@ export default function PersonnelMetrics() {
             <span className="text-2xl text-gray-700 dark:text-gray-300">
               Bajas por Recoger
             </span>
-            {loading ? (
-              <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                cargando ...
-              </h4>
-            ) : (
-              <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                {totalDelivery}
-              </h4>
-            )}
+             {loading ? (
+               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+                 cargando ...
+               </h4>
+             ) : error ? (
+               <h4 className="mt-2 font-bold text-red-500 text-title-sm">
+                 {error}
+               </h4>
+             ) : (
+               <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+                 {totalDelivery}
+               </h4>
+             )}
           </div>
 
           <Badge color="error">

@@ -31,6 +31,24 @@ export const PersonnelService = {
   getTotalCount() {
     return api.get<PersonnelCountResponse>(`${BASE_URL}?limit=1`);
   },
+
+  exportCSV(params?: any) {
+    return api.get(`${BASE_URL}export/csv/`, {
+      params,
+      responseType: "blob",
+    });
+  },
+
+  exportPDF(params?: any) {
+    return api.get(`${BASE_URL}export/pdf/`, {
+      params,
+      responseType: "blob",
+    });
+  },
+
+  exportAllJSON(params?: any) {
+    return api.get(`${BASE_URL}export/all/`, { params });
+  },
 };
 
 export interface UnitsReq {

@@ -1,7 +1,6 @@
 import {
   PageBreadCrumb,
   PageMeta,
-  UserAddressCard,
   UserInfoCard,
   UserMetaCard,
 } from "../components";

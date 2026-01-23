@@ -9,3 +9,5 @@ export * from "./UiElements";
 export { default as Blank } from "./Blank";
 export { default as Calendar } from "./Calendar";
 export { default as UserProfiles } from "./UserProfiles";
+export { default as PrenatalRecordsPage } from "./Tables/PrenatalRecordsPage";
+export { default as NatalDataTablePage } from "./Tables/NatalDataTablePage";

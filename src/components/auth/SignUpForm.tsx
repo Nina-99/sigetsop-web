@@ -6,6 +6,18 @@ import { themeConfig } from "../../configs";
 import auth, { authRegister } from "../../services/auth";
 import { useAuth } from "../../@core";
 import { jwtDecode } from "jwt-decode";
+import {
+  showRegisterLoading,
+  showRegisterSuccess,
+  showRegisterError,
+  showConnectionError,
+  showServerError,
+  showDatabaseError,
+  showTimeoutError,
+  showEmptyFieldsError,
+  showValidationError,
+  closeSwal,
+} from "../../utils/swalMessages";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -32,38 +44,112 @@ export default function SignUpForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    // Validar campos obligatorios
+    if (!formData.first_name.trim()) errors.push("nombre");
+    if (!formData.last_name.trim()) errors.push("apellido paterno");
+    if (!formData.maternal_name.trim()) errors.push("apellido materno");
+    if (!formData.username.trim()) errors.push("usuario");
+    if (!formData.email.trim()) errors.push("correo electrónico");
+    if (!formData.password.trim()) errors.push("contraseña");
+    if (!formData.phone || formData.phone.toString().trim() === "") errors.push("teléfono");
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      errors.push("formato de correo inválido");
+    }
+
+    // Validar longitud de contraseña
+    if (formData.password && formData.password.length < 6) {
+      errors.push("contraseña debe tener al menos 6 caracteres");
+    }
+
+    // Validar términos y condiciones
+    if (!isChecked) {
+      errors.push("debes aceptar los términos y condiciones");
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
+
+    // Validar formulario
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      if (validationErrors.includes("debes aceptar los términos y condiciones")) {
+        showValidationError("Debes aceptar los términos y condiciones para continuar.");
+      } else if (validationErrors.includes("formato de correo inválido")) {
+        showValidationError("El formato del correo electrónico no es válido.");
+      } else if (validationErrors.includes("contraseña debe tener al menos 6 caracteres")) {
+        showValidationError("La contraseña debe tener al menos 6 caracteres.");
+      } else {
+        showEmptyFieldsError();
+      }
+      return;
+    }
+
+    // Mostrar loading
+    showRegisterLoading();
 
     try {
+      // Registrar usuario
       await authRegister(formData);
+      
+      // Iniciar sesión automáticamente
       const data = await auth(formData.username, formData.password);
+      
       if (!data || !data.access) {
-        throw new Error(
-          "El registro fue exitoso, pero no se recibió el token de acceso.",
-        );
+        throw new Error("El registro fue exitoso, pero no se pudo iniciar sesión automáticamente.");
       }
-      localStorage.setItem("token", data.access);
 
+      // Cerrar loading
+      closeSwal();
+
+      // Guardar token y datos
+      localStorage.setItem("token", JSON.stringify(data));
+      login(data);
+
+      // Decodificar token para obtener datos del usuario
       try {
         const decoded = jwtDecode<Record<string, unknown>>(data.access);
-        console.log("Token decodificado:", decoded);
+        console.log("Usuario registrado y logueado:", decoded);
       } catch (tokenError) {
-        console.warn("No se pudo decodificar el token para log:", tokenError);
+        console.warn("No se pudo decodificar el token:", tokenError);
       }
 
-      login(data.access);
+      // Mostrar mensaje de éxito
+      await showRegisterSuccess();
+
+      // Redirigir al dashboard
       navigate("/");
-      // localStorage.setItem("refresh", data.refresh);
-      const decoded = jwtDecode<Record<string, unknown>>(data.access);
-      console.log("Token decodificado crudo:", decoded);
-      setMessage("Usuario registrado exitosamente ✅");
-    } catch (error: any) {
-      setMessage(error.error || "Error al registrar usuario ❌");
-    } finally {
-      setLoading(false);
+
+    } catch (err) {
+      // Cerrar loading
+      closeSwal();
+      
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      
+      // Manejo específico de errores
+      if (errorMessage.includes("No se puede conectar al servidor")) {
+        showConnectionError();
+      } else if (errorMessage.includes("Tiempo de espera agotado")) {
+        showTimeoutError();
+      } else if (errorMessage.includes("base de datos")) {
+        showDatabaseError();
+      } else if (errorMessage.includes("servidor") || errorMessage.includes("interno")) {
+        showServerError();
+      } else if (errorMessage.includes("usuario") && errorMessage.includes("ya existe")) {
+        showRegisterError("El nombre de usuario ya está en uso. Por favor elige otro.");
+      } else if (errorMessage.includes("email") && errorMessage.includes("ya existe")) {
+        showRegisterError("El correo electrónico ya está registrado. Por favor usa otro.");
+      } else {
+        showRegisterError(errorMessage);
+      }
     }
   };
 

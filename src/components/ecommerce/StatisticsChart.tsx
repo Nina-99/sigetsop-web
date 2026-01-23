@@ -5,10 +5,7 @@ import { ApexOptions } from "apexcharts";
 import ChartTab, { PeriodType } from "../common/ChartTab";
 import { AVC09Service } from "../../services";
 
-interface ExtendedLeavesStats {
-  year: number;
-  extended_leaves_monthly_count: number[];
-}
+
 
 const aggregateToQuarterly = (monthlyData: number[]): number[] => {
   // Trimestre 1: Ene, Feb, Mar (índices 0, 1, 2)
@@ -30,25 +27,41 @@ const aggregateToAnnually = (monthlyData: number[]): number[] => {
 };
 
 export default function StatisticsChart() {
-  const [statsData, setStatsData] = useState<ExtendedLeavesStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("monthly");
-  const rawMonthlyData = statsData?.extended_leaves_monthly_count || [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  ];
-  const currentYear = statsData?.year || new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
+  
+  // Estados para dos años seleccionables
+  const [year1, setYear1] = useState<number>(currentYear);      // Año principal (actual)
+  const [year2, setYear2] = useState<number>(currentYear - 1);  // Año a comparar (pasado)
+  
+  // Datos para comparación
+  const [year1Data, setYear1Data] = useState<number[]>([]);
+  const [year2Data, setYear2Data] = useState<number[]>([]);
+  
+  // Generar todos los años disponibles (últimos 10 años)
+  const availableYears = Array.from(
+    { length: 10 }, 
+    (_, i) => currentYear - i  // [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
+  );
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchComparisonData = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        const response = await AVC09Service.getStatics();
-
-        setStatsData(response.data);
+        
+        // Obtener datos de ambos años
+        const [res1, res2] = await Promise.all([
+          AVC09Service.getStatics(year1),
+          AVC09Service.getStatics(year2),
+        ]);
+        
+        setYear1Data(res1.data.extended_leaves_monthly_count);
+        setYear2Data(res2.data.extended_leaves_monthly_count);
+        
       } catch (e) {
         if (axios.isAxiosError(e)) {
           const errorMessage = e.response
@@ -63,18 +76,32 @@ export default function StatisticsChart() {
       }
     };
 
-    fetchStats();
-  }, []);
+    // Solo cargar si ambos años son válidos
+    if (year1 && year2) {
+      fetchComparisonData();
+    }
+  }, [year1, year2]);  // Recargar cuando cambie cualquier año
 
-  // NOTE: useMemo para recalcular los datos del gráfico SÓLO si cambian rawMonthlyData o selectedPeriod
+  // NOTE: useMemo para recalcular los datos del gráfico SÓLO si cambian los datos o selectedPeriod
   const { chartData, chartCategories, chartTitleSuffix } = useMemo(() => {
-    let data: number[] = [];
+    const processData = (data: number[]) => {
+      switch (selectedPeriod) {
+        case "monthly":
+          return data;
+        case "quarterly":
+          return aggregateToQuarterly(data);
+        case "annually":
+          return aggregateToAnnually(data);
+        default:
+          return data;
+      }
+    };
+
     let categories: string[] = [];
     let titleSuffix = "";
 
     switch (selectedPeriod) {
       case "monthly":
-        data = rawMonthlyData;
         categories = [
           "Ene",
           "Feb",
@@ -89,46 +116,66 @@ export default function StatisticsChart() {
           "Nov",
           "Dic",
         ];
-        titleSuffix = `Mes (${currentYear})`;
+        titleSuffix = `Meses`;
         break;
       case "quarterly":
-        data = aggregateToQuarterly(rawMonthlyData);
         categories = ["T1", "T2", "T3", "T4"];
-        titleSuffix = `Trimestre (${currentYear})`;
+        titleSuffix = `Trimestres`;
         break;
       case "annually":
-        data = aggregateToAnnually(rawMonthlyData);
-        categories = [`${currentYear}`];
-        titleSuffix = `Anual (${currentYear})`;
+        categories = ["Total"];
+        titleSuffix = `Anual`;
         break;
     }
 
     return {
-      chartData: data,
+      chartData: {
+        year1: processData(year1Data),
+        year2: processData(year2Data),
+      },
       chartCategories: categories,
       chartTitleSuffix: titleSuffix,
     };
-  }, [rawMonthlyData, selectedPeriod, currentYear]);
+  }, [year1Data, year2Data, selectedPeriod]);
 
   const series = [
     {
-      name: `Bajas Extendidas - ${chartTitleSuffix}`,
-      data: chartData,
+      name: `Año ${year1}`,
+      data: chartData.year1,
+    },
+    {
+      name: `Año ${year2}`,
+      data: chartData.year2,
     },
   ];
 
   // 3. Opciones de ApexCharts (se actualiza el eje X)
   const options: ApexOptions = {
-    legend: { show: false, position: "top", horizontalAlign: "left" },
-    colors: ["#465FFF"],
+    legend: { 
+      show: true, 
+      position: "top", 
+      horizontalAlign: "center",
+      offsetY: 0,
+      labels: {
+        colors: ["#6B7280"],
+        useSeriesColors: false,
+      },
+    },
+    colors: ["#84cc16", "#ef4444"], // lime-500 para año 1, red-500 para año 2
     chart: {
       fontFamily: "Outfit, sans-serif",
       height: 310,
       type: "line",
       toolbar: { show: false },
     },
-    stroke: { curve: "straight", width: [2] },
-    fill: { type: "gradient", gradient: { opacityFrom: 0.55, opacityTo: 0 } },
+    stroke: { curve: "straight", width: [2, 2] },
+    fill: { 
+      type: "gradient", 
+      gradient: { 
+        opacityFrom: 0.55, 
+        opacityTo: 0 
+      } 
+    },
     markers: {
       size: 4,
       strokeColors: "#fff",
@@ -142,7 +189,9 @@ export default function StatisticsChart() {
     dataLabels: { enabled: false },
     tooltip: {
       enabled: true,
-      x: { formatter: (val) => val },
+      x: { formatter: (val) => val.toString() },
+      y: { formatter: (val) => `${val} bajas` },
+      theme: "light",
     },
     xaxis: {
       type: "category",
@@ -155,7 +204,7 @@ export default function StatisticsChart() {
       labels: {
         style: { fontSize: "12px", colors: ["#6B7280"] },
       },
-      title: { text: "N° Bajas", style: { fontSize: "12px" } }, // Título opcional
+      title: { text: "N° Bajas", style: { fontSize: "12px" } },
     },
   };
 
@@ -171,14 +220,41 @@ export default function StatisticsChart() {
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
         <div className="w-full">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Estadísticas de Bajas Extendidas
+            Comparación de Bajas Extendidas
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Conteo agrupado por **{selectedPeriod}** para el año **{currentYear}
-            **
+            Comparación por **{chartTitleSuffix}**: Año {year1} vs Año {year2}
           </p>
         </div>
-        <div className="flex items-start w-full gap-3 sm:justify-end">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:justify-end">
+          {/* Selectores de años */}
+          <div className="flex items-center gap-2">
+            <select
+              value={year1}
+              onChange={(e) => setYear1(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm 
+                         bg-white dark:bg-gray-800 dark:border-gray-600 
+                         dark:text-gray-200 focus:outline-none focus:ring-2 
+                         focus:ring-lime-500 focus:border-transparent"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">vs</span>
+            <select
+              value={year2}
+              onChange={(e) => setYear2(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm 
+                         bg-white dark:bg-gray-800 dark:border-gray-600 
+                         dark:text-gray-200 focus:outline-none focus:ring-2 
+                         focus:ring-red-500 focus:border-transparent"
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
           {/* Se pasa la función para actualizar el estado */}
           <ChartTab onSelectPeriod={setSelectedPeriod} />
         </div>

@@ -28,3 +28,5 @@ bun.lock
 # 🖼️ Archivos de Muestra / Prueba
 # Ignora archivos de imagen grandes, temporales o de prueba
 banner.png# Logs
+AGENTS.md
+skills.json
