@@ -16,7 +16,7 @@ export default function NotificationDropdown() {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
   // URL de tu backend Django Channels
-  const WS_URL = "ws://localhost:8000/ws/notifications/";
+  const WS_URL = import.meta.env.VITE_WS_URL;
 
   const { lastJsonMessage } = useWebSocket(WS_URL, {
     onOpen: () => console.log("WebSocket Notificaciones Conectado"),
