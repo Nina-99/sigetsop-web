@@ -1,6 +1,5 @@
 import axios from "axios";
 import api from "./axiosInstance";
-import { get } from "http";
 
 const BASE_URL = "/avc09/";
 
@@ -41,8 +40,8 @@ export const AVC09Service = {
   },
 
   getStatics(year?: number) {
-    const url = year 
-      ? `${BASE_URL}get_statics?year=${year}` 
+    const url = year
+      ? `${BASE_URL}get_statics?year=${year}`
       : `${BASE_URL}get_statics`;
     return api.get<ExtendedLeavesStats>(url);
   },

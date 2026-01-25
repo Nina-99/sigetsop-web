@@ -44,7 +44,7 @@ const MobileAuthConsumer: React.FC = () => {
           // 💡 REDIRECCIÓN FINAL AL COMPONENTE DE SUBIDA MÓVIL
           navigate("/upload/mobile", { replace: true });
         }, 1500);
-      } catch (error) {
+      } catch (error: any) {
         console.error("❌ Error al consumir el tóken:", error);
         if (error.response?.status === 401 || error.response?.status === 403) {
           setStatusMessage(

@@ -1,5 +1,5 @@
 import {
-  BarChartOne,
+
   ComponentCard,
   PageBreadCrumb,
   PageMeta,

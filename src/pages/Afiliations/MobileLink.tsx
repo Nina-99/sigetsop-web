@@ -1,10 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-
-// 💡 Define la ruta final a la que quieres redirigir
-// ASEGÚRATE de que esta ruta es la que corresponde a tu AVC09MovileUpload.tsx
-const MOBILE_UPLOAD_PATH = "/avc09/upload-mobile";
-const SESSION_STORAGE_KEY = "avc09_mobile_session_token";
 
 const MobileLink: React.FC = () => {
   // Para leer los parámetros de la URL (?token=...)
@@ -14,60 +8,6 @@ const MobileLink: React.FC = () => {
 
   // Estado para mostrar un mensaje amigable
   const [message, setMessage] = useState("Enlazando sesión móvil...");
-
-  const mobileSessionToken = React.useRef(
-    localStorage.getItem(SESSION_STORAGE_KEY),
-  );
-
-  const uploadToBackend = async (fileBlob: Blob, finalPoints?: Points) => {
-    // 🛑 COMPROBACIÓN CRÍTICA
-    if (!mobileSessionToken.current) {
-      setMessage(
-        "❌ Token de sesión móvil no encontrado. Por favor, escanee el QR nuevamente.",
-      );
-      setIsUploading(false);
-      return; // Detener la subida
-    }
-
-    setIsUploading(true);
-    setMessage("Subiendo archivo procesado...");
-
-    const formData = new FormData();
-    // ... (Creación de FormData)
-    const file = new File([fileBlob], "upload.jpg", { type: fileBlob.type });
-    formData.append("file", file);
-
-    if (finalPoints) {
-      formData.append("points", JSON.stringify(finalPoints));
-    }
-
-    try {
-      await avc09.post(`/upload/mobile/`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          // 🔑 CAMBIO CLAVE: Enviamos el token en un encabezado personalizado
-          "X-Mobile-Session-Token": mobileSessionToken.current,
-        },
-      });
-
-      setMessage("✅ ¡Subida exitosa! Vuelve a tu PC.");
-      setTimeout(() => navigate("/"), 3000);
-    } catch (error: any) {
-      console.error("Error al subir:", error);
-
-      if (
-        error.response &&
-        (error.response.status === 401 || error.response.status === 403)
-      ) {
-        setMessage(
-          "❌ Error: Sesión expirada o token inválido. Re-escanea el QR.",
-        );
-      } else {
-        setMessage("❌ Error al subir el archivo.");
-      }
-      setIsUploading(false);
-    }
-  };
 
   useEffect(() => {
     const SESSION_TOKEN = searchParams.get("token");

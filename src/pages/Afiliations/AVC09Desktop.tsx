@@ -18,7 +18,7 @@ const AVC09Desktop: React.FC = () => {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [initialPoints, setInitialPoints] = useState<Points[] | null>(null);
+  const [initialPoints, setInitialPoints] = useState<number[][] | null>(null);
   const [ocrData, setOcrData] = useState<OcrData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -206,7 +206,7 @@ const AVC09Desktop: React.FC = () => {
       x: number;
       y: number;
     }
-    const arrayPoints: number[][] = initialPoints;
+    const arrayPoints: number[][] = initialPoints as any;
     const objectPoints: Point[] = arrayPoints.map(([x, y]) => ({ x, y }));
 
     return (
@@ -312,7 +312,7 @@ const AVC09Desktop: React.FC = () => {
       <DropzoneComponent
         onUploadSuccess={(data: {
           image_url: string;
-          initial_points: Points[];
+          initial_points: any;
         }) => {
           setImageUrl(data.image_url);
           setInitialPoints(data.initial_points);

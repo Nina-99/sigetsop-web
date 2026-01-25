@@ -138,13 +138,13 @@ const AVC09MobileUpload: React.FC = () => {
     }
   };
 
-  const handleCapture = (base64Image: string, points: PointsObject[]) => {
+  const handleCapture = (base64Image: string, points: any) => {
     setTempImage(base64Image);
     setTempPoints(points);
     setMode("correct");
   };
 
-  const handleCorrectionComplete = async (correctedPoints: PointsObject[]) => {
+  const handleCorrectionComplete = async (correctedPoints: any) => {
     if (!tempImage) return;
 
     try {
@@ -228,13 +228,9 @@ const AVC09MobileUpload: React.FC = () => {
     return (
       <div style={{ height: "100vh", width: "100vw", background: "#000" }}>
         <PointCorrector
-          imageSrc={tempImage}
-          initialPoints={tempPoints}
-          onSave={handleCorrectionComplete}
-          // onCancel={() => {
-          //   setMode("select");
-          //   setTempImage(null);
-          // }}
+          imageUrl={tempImage}
+          initialPoints={tempPoints as any}
+          onConfirm={handleCorrectionComplete as any}
         />
       </div>
     );
