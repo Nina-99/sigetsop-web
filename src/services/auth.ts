@@ -2,11 +2,6 @@ import api from "./axiosInstance";
 
 let BASE_URL = "";
 
-interface PersonnelCountResponse {
-  count: number;
-  results: any[];
-}
-
 // export const UsersService = {
 //   list() {
 //     return api.get("/users/");
@@ -75,7 +70,7 @@ export interface AuthTokenResponse {
 }
 
 export const auth = async (username: string, password: string) => {
-  BASE_URL = "/token/";
+  BASE_URL = "token/";
   
   // Validación de entrada
   if (!username.trim() || !password.trim()) {
@@ -102,7 +97,7 @@ export const auth = async (username: string, password: string) => {
 };
 
 export const authRegister = async (data: RegisterData) => {
-  BASE_URL = "/register/";
+  BASE_URL = "register/";
   
   // Validación de entrada
   if (!data.first_name?.trim() || !data.last_name?.trim() || 

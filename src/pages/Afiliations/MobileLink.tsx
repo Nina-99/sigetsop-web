@@ -1,4 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+
+const MOBILE_UPLOAD_PATH = "/upload/mobile";
+const SESSION_STORAGE_KEY = "avc09_mobile_session_token";
 
 const MobileLink: React.FC = () => {
   // Para leer los parámetros de la URL (?token=...)
