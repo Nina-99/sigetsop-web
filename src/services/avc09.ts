@@ -1,7 +1,7 @@
 import axios from "axios";
 import api from "./axiosInstance";
 
-const BASE_URL = "/avc09/";
+const BASE_URL = "avc09/";
 
 interface AVC09CountResponse {
   count: number;

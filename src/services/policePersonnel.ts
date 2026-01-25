@@ -1,6 +1,6 @@
 import api from "./axiosInstance";
 
-const BASE_URL = "/personnel/";
+const BASE_URL = "personnel/";
 
 interface PersonnelCountResponse {
   count: number;

@@ -1,6 +1,6 @@
 import api from "./axiosInstance";
 
-const BASE_URL = "/grades/";
+const BASE_URL = "grades/";
 
 export const GradesService = {
   list() {

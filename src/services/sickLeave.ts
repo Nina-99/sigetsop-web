@@ -1,6 +1,6 @@
 import api from "./axiosInstance";
 
-const BASE_URL = "/sick-leaves/";
+const BASE_URL = "sick-leaves/";
 
 export interface SickLeave {
   id: number;

@@ -1,6 +1,6 @@
 import api from "./axiosInstance";
 
-const BASE_URL = "/prenatal_records/";
+const BASE_URL = "prenatal_records/";
 
 export interface PrenatalRecord {
   id: number;

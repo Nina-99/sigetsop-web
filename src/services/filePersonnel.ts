@@ -1,6 +1,6 @@
 import api from "./axiosInstance";
 
-const BASE_URL = "/file-personnel/";
+const BASE_URL = "file-personnel/";
 
 interface FileCountResponse {
   count: string;
